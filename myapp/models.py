@@ -1,0 +1,164 @@
+from django.contrib.auth.models import User
+from django.db import models
+from django.utils import timezone
+from django.core.validators import RegexValidator
+from django.core.exceptions import ValidationError
+
+
+# Professional mobile number validation (India)
+mobile_validator = RegexValidator(
+    regex=r'^[6-9]\d{9}$',
+    message="Enter a valid 10-digit mobile number starting with 6-9."
+)
+
+# Create your models here.
+class Staff(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    staff_name =models.CharField(max_length=100)
+    contact=models.CharField(max_length=10,validators=[mobile_validator],blank=True)
+    staff_id = models.AutoField(primary_key=True)
+    staff_email = models.EmailField(unique=True)
+    courses = models.ManyToManyField("Course", related_name="staffs")
+
+    def __str__(self):
+        return self.staff_name
+
+class Course(models.Model):
+    course_id = models.AutoField(primary_key=True)
+    course_name = models.CharField(max_length=100,unique=True)
+                
+    def __str__(self):
+        return self.course_name
+    def save(self,*args,**kwargs):
+        #print(self.course_name)
+        if self.course_name:
+            self.course_name=self.course_name.capitalize()
+            #print(self.course_name)
+        super().save(*args,**kwargs)
+
+class Student(models.Model):
+    student_id = models.AutoField(primary_key=True)
+    student_name = models.CharField(max_length=100)
+    join_date = models.DateField()
+    end_date = models.DateField(null=True, blank=True)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='students')
+    staff = models.ForeignKey(Staff, on_delete=models.SET_NULL,null=True,blank=True, related_name='students')
+    student_email = models.EmailField(unique=True)
+    student_contact = models.CharField(max_length=20, blank=True)
+    # BATCH_CHOICES = [
+    #     (True, 'Morning'),
+    #     (False, 'Afternoon'),
+    # ]
+    # batch = models.BooleanField(choices=BATCH_CHOICES, default=True)
+    
+    batch = models.ForeignKey("Batch", on_delete=models.SET_NULL, null=True, blank=True, related_name="students")
+
+    MODE_CHOICES = [
+        (True, 'Offline'),
+        (False, 'Online'),
+    ]
+    mode = models.BooleanField(choices=MODE_CHOICES, default=True)
+
+
+    def __str__(self):
+        course_name = self.course.course_name if self.course else "No Course"
+        staff_name = self.staff.staff_name if self.staff else "Unassigned"
+        return f"{self.student_name} ({course_name} - {staff_name})"
+
+
+class CourseTopic(models.Model):
+    topic_id = models.AutoField(primary_key=True)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='topics')
+    module_name = models.CharField(max_length=100)
+    topic_name = models.CharField(max_length=100)
+
+    class Meta:
+        unique_together = ('course', 'module_name', 'topic_name')
+        ordering = ('course','module_name','topic_name')
+    def __str__(self):
+        return f"{self.module_name} - {self.topic_name}"
+    
+    def save(self,*args,**kwargs):
+        print(self.module_name)
+        if self.module_name and self.topic_name:
+            self.module_name=self.module_name.capitalize()
+            self.topic_name=self.topic_name.capitalize()
+            print(self.module_name)
+        super().save(*args,**kwargs)
+
+class StudentTopicProgress(models.Model):
+    id = models.AutoField(primary_key=True)
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='progress')
+    topic = models.ForeignKey(CourseTopic, on_delete=models.CASCADE, related_name='progress')
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    marks = models.IntegerField(null=True, blank=True)
+    sign = models.CharField(max_length=100, help_text="Staff full name")
+
+    class Meta:
+        unique_together = ('student', 'topic')
+
+    def __str__(self):
+        return f"{self.student.student_name} - {self.topic.topic_name}"
+
+    # Add Date Validation
+    def clean(self):
+        # If end_date is provided but start_date is empty
+        if self.end_date and not self.start_date:
+            raise ValidationError("Start Date is required when End Date is filled.")
+
+        # If both dates exist → check order
+        if self.start_date and self.end_date:
+            if self.start_date > self.end_date:
+                raise ValidationError("Start Date cannot be greater than End Date.")
+
+
+
+class Attendance(models.Model):
+    staff = models.ForeignKey("Staff", on_delete=models.CASCADE, related_name="attendances")
+    date = models.DateField(default=timezone.now)
+    time = models.TimeField(auto_now_add=True)
+    wifi_verified = models.BooleanField(default=False)  # was it from correct WiFi?
+
+    class Meta:
+        unique_together = ('staff', 'date','wifi_verified')  # only one attendance per staff per day
+
+    def __str__(self):
+        return f"{self.staff.staff_name} - {self.date} ({'WiFi OK' if self.wifi_verified else 'Login only'})"
+
+class StudentAttendance(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='attendances')
+    date = models.DateField(default=timezone.now)
+    time = models.TimeField(auto_now_add=True)
+    STATUS_CHOICES = [
+        (True, 'Present'),
+        (False, 'Absent'),
+    ]
+    status=models.BooleanField(choices=STATUS_CHOICES, null=True,blank=True)  # True for Present, False for Absent
+
+    class Meta:
+        unique_together = ('student', 'date')  # only one attendance per student per day
+
+    def __str__(self):
+        return f"{self.student.student_name} - {self.date}"
+
+
+class Batch(models.Model):
+    batch_id = models.AutoField(primary_key=True)
+    staff = models.ForeignKey("Staff", on_delete=models.CASCADE, related_name="batches")
+    batch_name = models.CharField(max_length=50, help_text="Example: Morning Batch")
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+
+    class Meta:
+        unique_together = ('staff', 'batch_name')
+        ordering = ['start_time']
+
+    def __str__(self):
+        return f"{self.batch_name} ({self.start_time.strftime('%I:%M %p')} - {self.end_time.strftime('%I:%M %p')})"
+
+    def clean(self):
+        # Validate time order
+        if self.start_time and self.end_time:
+            if self.start_time >= self.end_time:
+                raise ValidationError("End Time must be later than Start Time.")

@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Students</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            padding: 25px 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            display:flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h2 {
+            color: #2d3748;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        
+        .logout {
+            background: linear-gradient(135deg, #e97c7c 0%, #db0505 100%);
+            color: white;
+            padding: 12px 28px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(243, 185, 181, 0.3);
+        }
+        
+        .logout:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            background: linear-gradient(135deg, #f70202 0%, #ff0303 100%);
+        }
+        
+        .content-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        h3 {
+            color: #2d3748;
+            font-size: 24px;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        th {
+            color: white;
+            padding: 18px 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        th:first-child {
+            border-radius: 10px 0 0 0;
+        }
+        
+        th:last-child {
+            border-radius: 0 10px 0 0;
+        }
+        
+        tbody tr {
+            background: white;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        tbody tr:hover {
+            background: #f7fafc;
+            transform: scale(1.01);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        
+        tbody tr:last-child {
+            border-bottom: none;
+        }
+        
+        td {
+            padding: 20px 15px;
+            color: #4a5568;
+            font-size: 15px;
+        }
+        
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #4a5568;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234a5568' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 35px;
+        }
+        
+        select:hover {
+            border-color: #667eea;
+        }
+        
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        button.update-btn {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(72, 187, 120, 0.3);
+            margin-right: 8px;
+        }
+        
+        button.update-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+        }
+        
+        a.button {
+            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(66, 153, 225, 0.3);
+            display: inline-block;
+        }
+        
+        a.button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(66, 153, 225, 0.4);
+        }
+        
+        .action-cell {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #718096;
+            font-size: 16px;
+        }
+        
+        .student-name {
+            font-weight: 600;
+            color: #2d3748;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .container{
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .markAttendance{
+            background: linear-gradient(135deg, #ed64a6 0%, #d53f8c 100%);
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(237, 100, 166, 0.3);
+            float: right;
+            margin-top: -50px;
+        }
+        .markAttendance:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(237, 100, 166, 0.4);
+            background: linear-gradient(135deg, #d53f8c 0%, #b83280 100%);
+        }
+
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #667eea;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            animation: fadeIn 0.6s ease;
+        }
+        .back-button:hover {
+            transform: translateX(-5px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .table-container {
+                overflow-x: scroll;
+            }
+            
+            table {
+                min-width: 800px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+        <div class = "header-left">
+            <h2>Welcome, {{ request.user.staff.staff_name }}</h2>
+            
+                <div class = "attendance",style="background:#f0f0f0; padding:10px; margin-bottom:20px; border:1px solid #ccc;">
+                    <strong>Today's Attendance ({{ attendance.date }}):</strong>
+                    {% if attendance %}
+                        ✅ Present ({{ attendance.time|time:"H:i" }}) 
+                        {% if attendance.wifi_verified %}
+                            <span style="color:green;">(WiFi Verified)</span>
+                        {% else %}
+                            <span style="color:orange;">(Not Verified)</span>
+                        {% endif %}
+                    {% else %}
+                        ❌ Not Marked Yet
+                    {% endif %}
+                </div>
+            </div>
+            <div class="header-right">
+                <h3>{{ batch.batch_name }} ({{ batch.start_time }} - {{ batch.end_time }})</h3>
+                <a class = "back-button" href="/get_batches" class="back-button">
+                    ⬅ Back to Batches
+                </a>
+            </div>
+        </div>
+
+        <div class="content-card">
+            <h3>Your Students</h3>
+            <a class ="markAttendance" href="{% url 'student_attendance' batch.batch_id %}">Mark Attendance</a>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student Name</th>
+                            <th>Course</th>
+                            <th>Batch</th>
+                            <th>Mode</th>
+                            <th style="text-align: center;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                        <tr>
+                            <td class="student-name">{{ student.student_name }}</td>
+                            <td>{{ student.course.course_name }}</td>
+                            
+                            <form method="post" style="display: contents;">
+                                {% csrf_token %}
+                                <td>
+                                    <form method="POST">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="student_id" value="{{ student.student_id }}">
+                                        <select name="batch">
+                                            {% for b in batches %}
+                                                <option value="{{ b.batch_id }}" {% if b == student.batch %}selected{% endif %}>
+                                                    {{ b.batch_name }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                </td>
+                                <td>
+                                    <select name="mode">
+                                        <option value="True" {% if student.mode %}selected{% endif %}>Online</option>
+                                        <option value="False" {% if not student.mode %}selected{% endif %}>Offline</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <div class="action-cell">
+                                        <input type="hidden" name="student_id" value="{{ student.student_id }}">
+                                        <button type="submit" class="update-btn">Update</button>
+                                        <a class="button" href="{% url 'student_detail' student.student_id batch.batch_id%}">View / Add Progress</a>
+                                    </div>
+                                </td>
+                            </form>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="empty-state">No students assigned to you.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
